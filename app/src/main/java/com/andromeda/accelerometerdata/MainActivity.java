@@ -1,15 +1,27 @@
 package com.andromeda.accelerometerdata;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.util.Set;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
+
+    public BluetoothAdapter bluetoothAdapter;
+    public int REQUEST_ENABLE_BT = 1;
+    public boolean bluetoothIsEnabled = false;
 
     private SensorManager sensorManager;
     private Sensor sensor;
@@ -22,6 +34,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        setupBluetooth();
 
         textView1 = findViewById(R.id.text_view_1);
         textView2 = findViewById(R.id.text_view_2);
@@ -57,6 +71,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                bluetoothIsEnabled = true;
+                getPairedDevicesList();
+            }
+            if (requestCode == RESULT_CANCELED) {
+                bluetoothIsEnabled = false;
+            }
+        }
+    }
+
+
     protected void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this);
@@ -66,4 +94,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
+
+    void setupBluetooth() {
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(bluetoothAdapter != null) {
+            if (!bluetoothAdapter.isEnabled()) {
+
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
+
+        }
+    }
+
+    void getPairedDevicesList() {
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                String deviceName = device.getName();
+                String deviceHardwareAddress = device.getAddress();
+                Log.i("Name", deviceName);
+                Log.i("id", deviceHardwareAddress);
+            }
+        }
+
+    }
+    
+
 }
